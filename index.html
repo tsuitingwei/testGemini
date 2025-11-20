@@ -1267,7 +1267,7 @@ class Game {
             title = "邊緣人";
             desc = "朋友不記得你，同事不找你，世界跟你沒有關係。";
             emoji = "🧍";
-        } else if (s.Hunger <= 70) {
+        } else if (s.Hunger >= 70) {
             title = "快餓死了";
             desc = "你的肚子完全空了，下一秒可能就要倒地。快去吃東西！";
             emoji = "🥀";
@@ -1275,13 +1275,13 @@ class Game {
             title = "肥豬";
             desc = "你這一天除了吃還是吃。肚子很飽，就是隻豬。";
             emoji = "🐷";
-        } else if (t.gamingSpend > 2000) {
+        } else if (t.gamingSpend > 1000) {
             title = "盤子";
-            desc = "遊戲公司感謝您的乾爹贊助。你獲得了虛擬的快樂，和真實的貧窮。";
+            desc = "遊戲公司感謝您的乾爹贊助。";
             emoji = "💸";
         } else if (t.gamingSpend >= 500) {
             title = "小課玩家";
-            desc = "適度課金讓生活更快樂。你很享受，但也還算理智。";
+            desc = "適度課金讓生活更快樂。";
             emoji = "🎮";
         }  else if (t.flags.includes('scammed') && s.Money < 0) {
             title = "白癡";
@@ -1289,15 +1289,15 @@ class Game {
             emoji = "🤡";
         } else if (s.Money >= 1000 && s.Values >= 70) {
             title = "守財奴";
-            desc = "你存了很多錢，但這一天你真的快樂嗎？";
+            desc = "你存了很多錢，但你快樂嗎？";
             emoji = "🔒";
         } else if (s.Mood >= 90 && s.Social >= 70) {
             title = "社交名流";
-            desc = "人見人愛，花見花開。你的生活充滿了光鮮亮麗。";
+            desc = "人見人愛，花見花開。";
             emoji = "✨";
         } else if (s.Mood < 30) {
             title = "你還好嗎";
-            desc = "活得很不開心";
+            desc = "快樂的事一件都沒做。";
         }else if (s.Money >= 1000 && s.Mood >= 50) {
             title = "過得不錯";
             desc = "錢很多，過得不錯的！";
