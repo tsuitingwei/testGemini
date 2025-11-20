@@ -535,7 +535,7 @@ const EVENTS_POOL = [
         options: [
             { text: "吃零食囉", effects: { Mood: 15, SelfWorth: -5, Hunger: -15, Values: -10, Health: -10 } },
             { text: "吃自備水果", effects: { Mood: 6, SelfWorth: 6, Hunger: -10, Values: 8, Health: 5 } },
-            { text: "忍住不吃", effects: { Mood: -8, Hunger: 10, SelfWorth: 5, Values: 5 } }
+            { text: "忍住不吃", effects: { Mood: -8, Hunger: 20, SelfWorth: 5, Values: 5 } }
         ]
     },
     {
@@ -545,7 +545,7 @@ const EVENTS_POOL = [
         options: [
             { text: "老闆！一份小辣", effects: { Money: -100, Mood: 25, Hunger: -40, Health: -10, Values: -5 } },
             { text: "小吃一點並加個蔬菜", effects: { Money: -80, Mood: 10, Hunger: -20, Health: -2, Values: 0 } },
-            { text: "快步走過", effects: { Mood: -5, Hunger: 10, Health: 5, Values: 5 } }
+            { text: "快步走過", effects: { Mood: -5, Hunger: 20, Health: 5, Values: 5 } }
         ]
     },
     {
@@ -555,7 +555,7 @@ const EVENTS_POOL = [
         options: [
             { text: "吃爆！拼回本", effects: { Money: -800, Mood: 40, Hunger: -100, Health: -15, Values: -20 } },
             { text: "開心吃", effects: { Money: -800, Mood: 20, Hunger: -50, Health: 5, Values: -10 } }, 
-            { text: "太貴了不吃", effects: { Money: 0, Mood: -10, Values: 15 } }
+            { text: "太貴了不吃", effects: { Money: 0, Hunger: 10, Mood: -10, Values: 15 } }
         ]
     },
     {
@@ -563,7 +563,7 @@ const EVENTS_POOL = [
         emoji: "🥛",
         type: 'food',
         options: [
-            { text: "聞起來沒壞，喝！", effects: { Money: 0, Hunger: -10 }, risk: {chance: 0.7, fail: {Health: -30, Mood: -20}, success: {Mood: 5}} },
+            { text: "聞起來沒壞，喝！", effects: { Money: 0, Hunger: -5 }, risk: {chance: 0.7, fail: {Health: -40, Mood: -20}, success: {Mood: 5}} },
             { text: "倒掉買新的", effects: { Money: -90, Hunger: -10, Health: 5, Values: 5 } },
             { text: "假裝沒看到", effects: { Money: 0, Hunger: 5, Values: -5 } }
         ]
@@ -573,19 +573,19 @@ const EVENTS_POOL = [
         emoji: "🎮",
         type: 'gaming',
         options: [
-            { text: "保底抽到有", effects: { Money: -2500, Mood: 60, SelfWorth: 20, Values: -50, Social: 10 } },
+            { text: "保底抽到有", effects: { Money: -900, Mood: 60, SelfWorth: 20, Values: -50, Social: 10 } },
             { text: "試水溫抽十連", effects: { Money: -300, Mood: 5 }, risk: {chance: 0.1, success: {Mood: 50}, fail: {Mood: -10}} },
             { text: "我是免費仔", effects: { Money: 0, Values: 10, Social: -5 } }
         ]
-    },
+    }
     {
         text: "手遊高級通行證",
         emoji: "🎫",
         type: 'gaming',
         options: [
-            { text: "買！為了獎勵", effects: { Money: -350, Mood: 15, Values: -5, Health: -5 } }, 
-            { text: "不買，佛系玩", effects: { Money: 0, Mood: 0, Values: 5 } },
-            { text: "退坑保平安", effects: { Money: 0, Mood: -5, Health: 5, Social: -10 } }
+            { text: "買！為了獎勵", effects: { Money: -350, Mood: 20, Values: -5, Health: -5 } }, 
+            { text: "不買，佛系玩", effects: { Money: 0, Mood: -5, Values: 5 } },
+            { text: "退坑保平安", effects: { Money: 0, Mood: -10, Health: 5, Social: -10 } }
         ]
     },
     {
@@ -603,9 +603,9 @@ const EVENTS_POOL = [
         emoji: "🚑",
         type: 'major',
         options: [
-            { text: "我有保險 (理賠)", effects: { Money: 2000, Health: -40, Mood: -30 }, flag: 'injured' },
-            { text: "私下和解賠錢", effects: { Money: -5000, Health: -10, Mood: -20, Values: -10 } },
-            { text: "重傷送醫 (無保險)", effects: { Money: -1000, Health: -80, Mood: -50 }, flag: 'disabled' }
+            { text: "我有保險 (理賠)", effects: { Money: 2000, Health: -80, Mood: -50 }, flag: 'injured' },
+            { text: "私下和解賠錢", effects: { Money: -500, Health: -10, Mood: -20, Values: -10 } },
+            { text: "重傷送醫 (無保險)", effects: { Money: -500, Health: -80, Mood: -50 }, flag: 'disabled' }
         ]
     },
     {
@@ -615,7 +615,7 @@ const EVENTS_POOL = [
         options: [
             { text: "不幸被裁 (領資遣費)", effects: { Money: 1500, SelfWorth: -60, Mood: -40, Social: -20 }, flag: 'unemployed' },
             { text: "倖存但降薪", effects: { Money: -200, SelfWorth: -10, Mood: -20, Health: -10 } }, 
-            { text: "主動辭職創業", effects: { Money: -3000, SelfWorth: 40, Mood: 20, Health: -20 }, risk: {chance: 0.2, success: {Money: 10000}, fail: {Money: -2000}} }
+            { text: "主動辭職創業", effects: { SelfWorth: 80, Mood: 40, Health: -50 }, risk: {chance: 0.2, success: {Money: 10000}, fail: {Money: -2000}} }
         ]
     },
     {
@@ -623,9 +623,9 @@ const EVENTS_POOL = [
         emoji: "🏥",
         type: 'major',
         options: [
-            { text: "掛急診詳細檢查", effects: { Money: -800, Health: 20, Mood: -10 }, risk: {chance: 0.3, fail: {Health: -50, text:"發現重病"}} },
-            { text: "吃止痛藥忍耐", effects: { Money: -50, Health: -30, Mood: -5 } },
-            { text: "相信偏方療法", effects: { Money: -2000, Health: -60, Values: -30 } }
+            { text: "掛急診詳細檢查", effects: { Money: -800, Health: 20, Mood: -10 }, risk: {chance: 0.3, fail: {Health: -80, text:"發現重病"}} },
+            { text: "吃止痛藥忍耐", effects: { Money: -10, Health: -30, Mood: -5 } },
+            { text: "相信偏方療法", effects: { Money: -200, Health: -60, Values: -30 } }
         ]
     },
     {
@@ -634,7 +634,7 @@ const EVENTS_POOL = [
         type: 'major',
         options: [
             { text: "被騙光積蓄", effects: { Money: -500, Mood: -80, Values: 20, SelfWorth: -50 }, flag: 'scammed' },
-            { text: "被騙光積蓄", effects: { Money: -1000, Mood: -80, Values: 20, SelfWorth: -50 }, flag: 'scammed' },
+            { text: "被騙光積蓄", effects: { Money: -100, Mood: -80, Values: 20, SelfWorth: -50 }, flag: 'scammed' },
             { text: "被騙光積蓄", effects: { Money: -800, Mood: -80, Values: 20, SelfWorth: -50 } , flag: 'scammed'}
         ]
     },
@@ -642,9 +642,9 @@ const EVENTS_POOL = [
         text: "朋友約喝咖啡聊是非",
         emoji: "☕",
         options: [
-            { text: "去咖啡廳", effects: { Money: -180, Mood: 20, SelfWorth: 5, Values: -5, MentalHealth: 8, Social: 15 } },
+            { text: "去咖啡廳", effects: { Money: -150, Mood: 20, SelfWorth: 10, Values: -5, MentalHealth: 10, Social: 20 } },
             { text: "視訊聊聊就好", effects: { Mood: 8, SelfWorth: 5, Values: 5, MentalHealth: 4, Social: 8 } },
-            { text: "拒絕社交!", effects: { Mood: -5, SelfWorth: -3, Values: 2, MentalHealth: 2, Social: -8 } }
+            { text: "拒絕社交!", effects: { Mood: -10, SelfWorth: -5, Values: 2, MentalHealth: 10, Social: -10 } }
         ]
     },
     {
@@ -652,7 +652,7 @@ const EVENTS_POOL = [
         emoji: "🛍️",
         options: [
             { text: "衝進去買", effects: { Money: -220, Mood: 30, SelfWorth: 2, Values: -20, MentalHealth: 6 } },
-            { text: "觀望一下", effects: { Mood: -2, SelfWorth: 3, Values: 5 } },
+            { text: "觀望一下", effects: { Mood: -5, SelfWorth: 3, Values: 5 } },
             { text: "堅定離開", effects: { Mood: -5, SelfWorth: 8, Values: 10 } }
         ]
     },
@@ -669,9 +669,9 @@ const EVENTS_POOL = [
         text: "下班路過超市蛋糕打折",
         emoji: "🍰",
         options: [
-            { text: "買回家大吃", effects: { Money: -120, Mood: 25, Hunger: -30, SelfWorth: 2, Values: -8 } },
-            { text: "買打折水果", effects: { Money: -60, Mood: 8, Hunger: -20, Values: 5, SelfWorth: 5 } },
-            { text: "節制跳過", effects: { Mood: -5, Hunger: 5, Values: 5 } }
+            { text: "買回家吃", effects: { Money: -120, Mood: 25, Hunger: -30, SelfWorth: 2, Values: -8 } },
+            { text: "只買打折水果", effects: { Money: -50, Mood: 10, Hunger: -20, Values: 5, SelfWorth: 5 } },
+            { text: "節制跳過", effects: { Mood: -5, Hunger: 10, Values: 5 } }
         ]
     },
     {
@@ -679,8 +679,8 @@ const EVENTS_POOL = [
         emoji: "🥺",
         options: [
             { text: "購物療法", effects: { Money: -500, Mood: 50, SelfWorth: 15, Values: -35, MentalHealth: 20 } },
-            { text: "找朋友哭訴", effects: { Mood: 15, SelfWorth: 5, MentalHealth: 10, Social: 10 } },
-            { text: "冥想/睡覺", effects: { Mood: 5, SelfWorth: 8, Values: 5, MentalHealth: 15 } }
+            { text: "找朋友哭訴", effects: { Mood: 20, SelfWorth: 5, MentalHealth: 10, Social: 10 } },
+            { text: "睡覺", effects: { Mood: 5, SelfWorth: 8, Values: 5, MentalHealth: 15 } }
         ]
     },
     {
@@ -849,9 +849,9 @@ const EVENTS_POOL = [
         text: "父母打電話來問候",
         emoji: "📞",
         options: [
-            { text: "轉錢孝敬", effects: { Money: -200, Mood: 10, Values: 20, Family: 20 } },
-            { text: "聊聊天", effects: { Money: 0, Mood: 15, MentalHealth: 10, Social: 10 } },
-            { text: "說在忙掛掉", effects: { Money: 0, Mood: -10, Values: -10, MentalHealth: -10 } }
+            { text: "轉錢孝敬", effects: { Money: -200, Mood: 10, Values: 20, SelfWorth: 10, Social: 10 } },
+            { text: "聊聊天", effects: { Mood: 15, MentalHealth: 10, Social: 10 } },
+            { text: "說在忙掛掉", effects: { Mood: -10, Values: -10, MentalHealth: -10, Social: -10 } }
         ]
     },
     {
@@ -897,7 +897,7 @@ const EVENTS_POOL = [
         options: [
             { text: "訂！哪次不訂！", effects: { Money: -80, Mood: 15, Social: 10, Values: -5 } },
             { text: "我喝水", effects: { Mood: -5, Values: 10, Health: 5 } },
-            { text: "叫同事請客", effects: { Money: 0, Mood: 10, Social: -15, Values: -10, SelfWorth: 5 } }
+            { text: "叫同事請客", effects: { Mood: 10, Social: -20, Values: -10, SelfWorth: -5 } }
         ]
     }
 ];
@@ -913,7 +913,7 @@ const GAME_CONFIG = {
         Money: 1000,
         Mood: 50,
         SelfWorth: 50,
-        Hunger: 20,
+        Hunger: 30,
         Values: 50,
         Health: 70, 
         Social: 50
@@ -1267,7 +1267,7 @@ class Game {
             title = "邊緣人";
             desc = "朋友不記得你，同事不找你，世界跟你沒有關係。";
             emoji = "🧍";
-        } else if (s.Hunger <= 5) {
+        } else if (s.Hunger <= 70) {
             title = "快餓死了";
             desc = "你的肚子完全空了，下一秒可能就要倒地。快去吃東西！";
             emoji = "🥀";
