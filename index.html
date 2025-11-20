@@ -705,7 +705,7 @@ const EVENTS_POOL = [
         text: "串流平台訂閱漲價通知",
         emoji: "📺",
         options: [
-            { text: "續訂！", effects: { Money: -30, Mood: 5, Values: -2 } },
+            { text: "續訂！", effects: { Money: -100, Mood: 5, Values: -2 } },
             { text: "改當免費仔看廣告", effects: { Money: 0, Mood: -10, Values: 5, MentalHealth: -5 } },
             { text: "戒掉追劇", effects: { Money: 0, Mood: -15, Values: 10, Social: -5, SelfWorth: 5 } }
         ]
@@ -734,7 +734,7 @@ const EVENTS_POOL = [
         options: [
             { text: "手刀預購", effects: { Money: -800, Mood: 50, SelfWorth: 30, Values: -40 } },
             { text: "手機還能用", effects: { Money: 0, Values: 15, SelfWorth: 5 } },
-            { text: "酸它沒新意", effects: { Mood: 5, Social: -5 } }
+            { text: "酸它沒新意", effects: { Mood: 5, Social: -20 } }
         ]
     },
     {
@@ -1241,7 +1241,7 @@ class Game {
 
         if (s.Money < 300 && (s.Health < 40 || s.Mood < 40)) {
             title = "一般窮鬼";
-            desc = "沒錢、沒心情、沒健康。你真的過得……算了，不說傷人。";
+            desc = "沒錢、沒心情、沒健康。";
             emoji = "🪫";
         }else if (t.flags.includes('scammed') && s.Money < 0) {
             title = "白癡";
@@ -1259,10 +1259,18 @@ class Game {
             title = "可憐人";
             desc = "沒錢、沒健康，連老天爺都不同情你。最悲慘的結局。";
             emoji = "🌧️";
+        } else if (s.Mood <= 20) {
+            title = "你還好嗎";
+            desc = "心情低到不行，偶爾要對自己好一點。";
+            emoji = "💔";
         } else if (s.Social <= 20) {
             title = "邊緣人";
             desc = "朋友不記得你，同事不找你，世界跟你沒有關係。";
             emoji = "🧍";
+        } else if (s.Hunger <= 5) {
+            title = "快餓死了";
+            desc = "你的肚子完全空了，下一秒可能就要倒地。快去吃東西！";
+            emoji = "🥀";
         } else if (s.Hunger <= 15 && t.foodSpend > 500) {
             title = "肥豬";
             desc = "你這一天除了吃還是吃。肚子很飽，就是隻豬。";
@@ -1275,15 +1283,11 @@ class Game {
             title = "小課玩家";
             desc = "適度課金讓生活更快樂。你很享受，但也還算理智。";
             emoji = "🎮";
-        }   else if (t.flags.includes('scammed') && s.Money < 0) {
+        }  else if (t.flags.includes('scammed') && s.Money < 0) {
             title = "白癡";
             desc = "你不是輸給世界，你是輸給自己的智商。詐騙集團都謝謝你。";
             emoji = "🤡";
-        } else if (s.Money <= 0) {
-            title = "破產負債";
-            desc = "你的戶頭只剩下兩位數。明天該怎麼辦？";
-            emoji = "📉";
-        } else if (s.Money >= 1500 && s.Values >= 70) {
+        } else if (s.Money >= 1000 && s.Values >= 70) {
             title = "守財奴";
             desc = "你存了很多錢，但這一天你真的快樂嗎？";
             emoji = "🔒";
@@ -1291,6 +1295,9 @@ class Game {
             title = "社交名流";
             desc = "人見人愛，花見花開。你的生活充滿了光鮮亮麗。";
             emoji = "✨";
+        } else if (s.Mood < 30) {
+            title = "你還好嗎";
+            desc = "活得很不開心";
         }
 
         this.triggerGameOver(title, desc, emoji);
