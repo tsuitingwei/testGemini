@@ -815,7 +815,7 @@ const EVENTS_POOL = [
         options: [
             { text: "乖乖繳錢", effects: { Money: -300, Mood: -20, Values: 5, SelfWorth: 5 } },
             { text: "拖延幾天", effects: { Money: 0, Mood: 5, Values: -10, MentalHealth: -15 } }, // Late fee logic implied?
-            { text: "打電話哭窮", effects: { Money: -250, SelfWorth: -20, Social: -10 } }
+            { text: "哭窮", effects: { Money: 0, Mood: -10, SelfWorth: -40, Social: -60, SelfWorth: -30 } }
         ]
     },
     {
@@ -1298,8 +1298,23 @@ class Game {
         } else if (s.Mood < 30) {
             title = "你還好嗎";
             desc = "活得很不開心";
+        }else if (s.Money >= 1000 && s.Mood >= 50) {
+            title = "過得不錯";
+            desc = "錢很多，過得不錯的！";
+            emoji = "🙂";
+        } else if (s.Mood >= 90) {
+            title = "超開心";
+            desc = "今天心情好到爆表！";
+            emoji = "😆";
+        } else if (s.SelfWorth <= 20) {
+            title = "價值低落";
+            desc = "什麼都做不好，需要休息和鼓勵。";
+            emoji = "😞";
+        } else if (s.SelfWorth >= 90) {
+            title = "我超讚！";
+            desc = "覺得自己棒透了！";
+            emoji = "🤩";
         }
-
         this.triggerGameOver(title, desc, emoji);
     }
 
