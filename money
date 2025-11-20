@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>錢都去哪了？</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #f2f0e4; /* 暖米色 */
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --accent-color: #e67e22;
+            --btn-color: #fdfdfd;
+            --btn-border: #dcdcdc;
+            --bar-bg: #e0e0e0;
+            --danger-color: #e74c3c;
+            --success-color: #27ae60;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'Noto Sans TC', sans-serif;
+            touch-action: none; /* 禁止滾動 */
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 600px; /* 手機版型限制 */
+            background: var(--bg-color);
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Canvas Layer for Effects and Stats Background */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* UI Layer */
+        #uiLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none; /* 讓點擊穿透到按鈕 */
+            display: flex;
+            flex-direction: column;
+            padding: 15px; 
+        }
+
+        /* Top Info Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            pointer-events: auto;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .day-badge {
+            background: #333;
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .money-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--success-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .help-btn {
+            background: #fff;
+            border: 1px solid #ccc;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            margin-left: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Stats Container */
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 12px;
+            background: rgba(255,255,255,0.9);
+            padding: 8px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            pointer-events: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .stat-label {
+            width: 25px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 8px;
+            background: var(--bar-bg);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-left: 4px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 50%;
+            transition: width 0.5s ease;
+        }
+
+        .stat-val-text {
+            font-size: 0.7rem;
+            color: #666;
+            width: 22px;
+            text-align: right;
+            margin-left: 4px;
+        }
+
+        /* Main Content Area - 修正 1: 充滿畫面 */
+        #mainContent {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* 拉開間距 */
+            position: relative;
+            pointer-events: none;
+            margin-bottom: 10px;
+        }
+
+        /* Event Card - 修正 1: 拉高卡片 */
+        .event-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            text-align: center;
+            pointer-events: auto;
+            transition: transform 0.3s, opacity 0.3s;
+            border: 1px solid rgba(0,0,0,0.05);
+            
+            /* New Layout props */
+            flex-grow: 1; /* 佔據剩餘空間 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .event-emoji {
+            font-size: 5rem; /* 更大的 Emoji */
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .event-text {
+            font-size: 1.4rem;
+            font-weight: bold;
+            line-height: 1.4;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        .event-subtext {
+             font-size: 0.85rem;
+             color: #95a5a6;
+        }
+
+        /* Options */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* 增加間距 */
+            pointer-events: auto;
+            flex-shrink: 0;
+        }
+
+        .option-btn {
+            background: var(--btn-color);
+            border: 2px solid var(--btn-border);
+            padding: 18px 20px; /* 增加按鈕高度 */
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.1s;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+            background: #f0f0f0;
+        }
+
+        .option-gain {
+            font-size: 0.9rem;
+            color: var(--success-color);
+            background: rgba(39, 174, 96, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* History Log */
+        .history-container {
+            margin-top: 10px;
+            height: 200px; 
+            background: rgba(255,255,255,0.6);
+            border-radius: 8px;
+            padding: 8px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            color: #555;
+            pointer-events: auto;
+            border: 1px solid rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+        
+        .history-item {
+            margin-bottom: 4px;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 2px;
+        }
+
+        .history-item span {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .diff-pos { color: var(--success-color); }
+        .diff-neg { color: var(--danger-color); }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(242, 240, 228, 0.98);
+            z-index: 100;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 30px; text-align: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .screen.active { opacity: 1; pointer-events: auto; }
+
+        .title-main { font-size: 2.2rem; font-weight: 900; color: #2c3e50; margin-bottom: 10px; }
+        .subtitle { font-size: 1rem; color: #7f8c8d; margin-bottom: 30px; line-height: 1.5; }
+        
+        .big-btn {
+            background: #2c3e50; color: white; border: none;
+            padding: 12px 40px; font-size: 1.1rem;
+            border-radius: 50px; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3);
+            margin: 8px 0; font-weight: bold;
+        }
+        .secondary-btn {
+            background: transparent; border: 2px solid #2c3e50; color: #2c3e50;
+            padding: 8px 25px; font-size: 0.9rem; border-radius: 50px;
+            cursor: pointer; margin: 5px 0; font-weight: bold;
+        }
+
+        /* End Screen Stats */
+        .end-stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%; max-width: 350px;
+            margin: 20px 0;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .end-stat-item {
+            display: flex; justify-content: space-between;
+            font-size: 0.9rem; color: #333;
+            border-bottom: 1px solid #eee;
+            padding: 5px 0;
+        }
+
+        /* Legend Modal */
+        #legendModal {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white; padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 200; width: 80%; max-width: 300px;
+            display: none;
+        }
+        #legendModal.show { display: block; }
+        .legend-item { display: flex; align-items: center; margin: 10px 0; font-size: 0.9rem; }
+        .legend-emoji { font-size: 1.5rem; margin-right: 10px; width: 30px; text-align: center; }
+        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 1.2rem; cursor: pointer; color: #999; }
+
+        .hidden { display: none !important; }
+
+        /* Floating Text */
+        .floating-text {
+            position: absolute; font-weight: bold; font-size: 1.2rem;
+            pointer-events: none; animation: floatUp 1.5s ease-out forwards;
+            text-shadow: 0 0 3px white; z-index: 50;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.2); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="uiLayer">
+        <div id="gameHud" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="top-bar">
+                <div style="display: flex; align-items: center;">
+                    <div class="day-badge">事件 <span id="dayVal">1</span> / 10</div>
+                    <div class="help-btn" onclick="game.toggleLegend()">?</div>
+                    <div class="help-btn" onclick="game.goHome()">🏠</div>
+                </div>
+                <div class="money-display">💰 <span id="moneyVal">1000</span></div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-row" id="stat-Mood">
+                    <div class="stat-label">😊</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 50%; background: #f1c40f;"></div></div>
+                    <div class="stat-val-text">50</div>
+                </div>
+                <div class="stat-row" id="stat-Hunger">
+                    <div class="stat-label">🍔</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 20%; background: #e74c3c;"></div></div>
+                    <div class="stat-val-text">20</div>
+                </div>
+                <div class="stat-row" id="stat-Values">
+                    <div class="stat-label">⚖️</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 50%; background: #3498db;"></div></div>
+                    <div class="stat-val-text">50</div>
+                </div>
+                <div class="stat-row" id="stat-Health">
+                    <div class="stat-label">❤️</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 70%; background: #9b59b6;"></div></div>
+                    <div class="stat-val-text">70</div>
+                </div>
+                <div class="stat-row" id="stat-SelfWorth">
+                    <div class="stat-label">💎</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 50%; background: #e67e22;"></div></div>
+                    <div class="stat-val-text">50</div>
+                </div>
+                 <div class="stat-row" id="stat-Social">
+                    <div class="stat-label">💬</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 50%; background: #1abc9c;"></div></div>
+                    <div class="stat-val-text">50</div>
+                </div>
+            </div>
+
+            <div id="mainContent">
+                <div class="event-card" id="eventCard">
+                    <div class="event-emoji" id="eventEmoji">🤔</div>
+                    <div class="event-text" id="eventText">事件載入中...</div>
+                    <div class="event-subtext" id="eventSubtext">...</div>
+                </div>
+
+                <div class="options-container" id="optionsContainer">
+                    <!-- Options -->
+                </div>
+            </div>
+
+            <div class="history-container" id="historyLog">
+                <div style="color:#999; text-align:center; padding-top:30px;">(歷程紀錄將顯示於此)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend Modal -->
+    <div id="legendModal">
+        <div class="close-modal" onclick="game.toggleLegend()">✕</div>
+        <h3 style="text-align:center; margin-top:0;">屬性說明</h3>
+        <div class="legend-item"><div class="legend-emoji">💰</div><div>金錢：你的財產</div></div>
+        <div class="legend-item"><div class="legend-emoji">😊</div><div>情緒：快樂程度</div></div>
+        <div class="legend-item"><div class="legend-emoji">🍔</div><div>飢餓：肚子餓拉</div></div>
+        <div class="legend-item"><div class="legend-emoji">❤️</div><div>健康：身心狀態</div></div>
+        <div class="legend-item"><div class="legend-emoji">⚖️</div><div>價值觀：理智程度</div></div>
+        <div class="legend-item"><div class="legend-emoji">💎</div><div>自我價值：成就感</div></div>
+        <div class="legend-item"><div class="legend-emoji">💬</div><div>社交：人際關係</div></div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen active">
+        <div style="font-size: 4rem; margin-bottom: 20px;">💸</div>
+        <div class="title-main">錢都去哪了？</div>
+        <div class="subtitle"><br>注意：金錢一變成負數，立即結束遊戲！</div>
+        <button class="big-btn" onclick="game.start()">開始挑戰</button>
+        <button class="secondary-btn" onclick="game.toggleLegend()">查看屬性說明</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen">
+        <div id="endEmoji" style="font-size: 5rem; margin-bottom: 10px;">💀</div>
+        <div class="title-main" id="endTitle">破產了</div>
+        <div class="subtitle" id="endReason">你的錢包和你腦袋一樣空。</div>
+        
+        <div class="end-stat-grid" id="endStats">
+            <!-- Injected by JS -->
+        </div>
+
+        <button class="big-btn" onclick="game.start()">再試一次</button>
+    </div>
+</div>
+
+<script>
+/* ================= GAME DATA ================= */
+const EVENTS_POOL = [
+    // 修正 3: 標記 Lottery 事件，機率在 Logic 中控制
+    {
+        text: "【突發】中了發票/樂透",
+        emoji: "🎟️",
+        type: 'lottery', 
+        options: [
+            // 修正 3: 選中頭獎觸發 flag
+            { text: "中頭獎！！！", effects: { Money: 0 }, flag: 'jackpot_winner' }, 
+            { text: "中兩百塊", effects: { Money: 200, Mood: 10 } },
+            { text: "沒中，槓龜", effects: { Money: -50, Mood: -5 } }
+        ]
+    },
+    // 修正 4: 新增賭博事件 (dynamic logic in handleChoice)
+    {
+        text: "地下賭場試手氣 (1-10 猜大小)",
+        emoji: "🎲",
+        type: 'gamble',
+        options: [
+            { text: "押大 (6-10)", gambleType: 'big' },
+            { text: "押小 (1-5)", gambleType: 'small' },
+            { text: "不賭快逃", gambleType: 'none', effects: { Mood: -5, Values: 5 } }
+        ]
+    },
+    // --- Basic Events ---
+    {
+        text: "午餐時間：你肚子餓了",
+        emoji: "🍱",
+        type: 'food',
+        options: [
+            { text: "外送豪華便當", effects: { Money: -250, Mood: 35, SelfWorth: 5, Hunger: -70, Values: -15, Health: 5 } },
+            { text: "自帶便當", effects: { Money: 0, Mood: 5, SelfWorth: 10, Hunger: -50, Values: 10, Health: 2 } },
+            { text: "忍一下不吃", effects: { Mood: -15, SelfWorth: -5, Hunger: 20, Values: 5, Health: -5 } }
+        ]
+    },
+    {
+        text: "看到超划算手遊禮包",
+        emoji: "📱",
+        type: 'gaming',
+        options: [
+            { text: "越貴越划", effects: { Money: -400, Mood: 40, SelfWorth: 10, Values: -25, Health: 0 } },
+            { text: "只買最便宜的", effects: { Money: -50, Mood: 10, SelfWorth: 5, Values: -10, Health: 0 } },
+            { text: "直接無視", effects: { Mood: -5, SelfWorth: 5, Values: 10 } }
+        ]
+    },
+    {
+        text: "公司發了一筆小獎金",
+        emoji: "💰",
+        options: [
+            { text: "全部存起來", effects: { Money: 200, Mood: 5, SelfWorth: 10, Values: 10, Health: 2 } },
+            { text: "拿去犒賞自己", effects: { Money: 0, Mood: 30, SelfWorth: 5, Values: -10, Health: 5 } },
+            { text: "存一半花一半", effects: { Money: 100, Mood: 10, SelfWorth: 7, Values: 5 } }
+        ]
+    },
+    {
+        text: "下午工作倦怠，看到零食櫃",
+        emoji: "🍪",
+        type: 'food',
+        options: [
+            { text: "吃零食囉", effects: { Mood: 15, SelfWorth: -5, Hunger: -15, Values: -10, Health: -10 } },
+            { text: "吃自備水果", effects: { Mood: 6, SelfWorth: 6, Hunger: -10, Values: 8, Health: 5 } },
+            { text: "忍住不吃", effects: { Mood: -8, Hunger: 10, SelfWorth: 5, Values: 5 } }
+        ]
+    },
+    {
+        text: "半夜路過鹹酥雞攤",
+        emoji: "🍗",
+        type: 'food',
+        options: [
+            { text: "老闆！一份小辣", effects: { Money: -100, Mood: 25, Hunger: -40, Health: -10, Values: -5 } },
+            { text: "小吃一點並加個蔬菜", effects: { Money: -80, Mood: 10, Hunger: -20, Health: -2, Values: 0 } },
+            { text: "快步走過", effects: { Mood: -5, Hunger: 10, Health: 5, Values: 5 } }
+        ]
+    },
+    {
+        text: "飯店吃到飽自助餐特價",
+        emoji: "🦞",
+        type: 'food',
+        options: [
+            { text: "吃爆！拼回本", effects: { Money: -800, Mood: 40, Hunger: -100, Health: -15, Values: -20 } },
+            { text: "開心吃", effects: { Money: -800, Mood: 20, Hunger: -50, Health: 5, Values: -10 } }, 
+            { text: "太貴了不吃", effects: { Money: 0, Mood: -10, Values: 15 } }
+        ]
+    },
+    {
+        text: "冰箱裡的過期牛奶",
+        emoji: "🥛",
+        type: 'food',
+        options: [
+            { text: "聞起來沒壞，喝！", effects: { Money: 0, Hunger: -10 }, risk: {chance: 0.7, fail: {Health: -30, Mood: -20}, success: {Mood: 5}} },
+            { text: "倒掉買新的", effects: { Money: -90, Hunger: -10, Health: 5, Values: 5 } },
+            { text: "假裝沒看到", effects: { Money: 0, Hunger: 5, Values: -5 } }
+        ]
+    },
+    {
+        text: "遊戲推出限定連動角色",
+        emoji: "🎮",
+        type: 'gaming',
+        options: [
+            { text: "保底抽到有", effects: { Money: -2500, Mood: 60, SelfWorth: 20, Values: -50, Social: 10 } },
+            { text: "試水溫抽十連", effects: { Money: -300, Mood: 5 }, risk: {chance: 0.1, success: {Mood: 50}, fail: {Mood: -10}} },
+            { text: "我是免費仔", effects: { Money: 0, Values: 10, Social: -5 } }
+        ]
+    },
+    {
+        text: "手遊高級通行證",
+        emoji: "🎫",
+        type: 'gaming',
+        options: [
+            { text: "買！為了獎勵", effects: { Money: -350, Mood: 15, Values: -5, Health: -5 } }, 
+            { text: "不買，佛系玩", effects: { Money: 0, Mood: 0, Values: 5 } },
+            { text: "退坑保平安", effects: { Money: 0, Mood: -5, Health: 5, Social: -10 } }
+        ]
+    },
+    {
+        text: "和朋友一起玩遊戲 但戰力落後",
+        emoji: "⚔️",
+        type: 'gaming',
+        options: [
+            { text: "買神裝帳號!", effects: { Money: -1500, Mood: 40, SelfWorth: 30, Values: -30 } },
+            { text: "買點遊戲幣", effects: { Money: -200, Mood: 10, Values: -5 } },
+            { text: "慢慢練急甚麼", effects: { Money: 0, SelfWorth: 15, Health: -10, Values: 10, Social: -10 } }
+        ]
+    },
+    {
+        text: "【突發】發生車禍意外",
+        emoji: "🚑",
+        type: 'major',
+        options: [
+            { text: "我有保險 (理賠)", effects: { Money: 2000, Health: -40, Mood: -30 }, flag: 'injured' },
+            { text: "私下和解賠錢", effects: { Money: -5000, Health: -10, Mood: -20, Values: -10 } },
+            { text: "重傷送醫 (無保險)", effects: { Money: -1000, Health: -80, Mood: -50 }, flag: 'disabled' }
+        ]
+    },
+    {
+        text: "【突發】公司宣布大規模裁員",
+        emoji: "📉",
+        type: 'major',
+        options: [
+            { text: "不幸被裁 (領資遣費)", effects: { Money: 1500, SelfWorth: -60, Mood: -40, Social: -20 }, flag: 'unemployed' },
+            { text: "倖存但降薪", effects: { Money: -200, SelfWorth: -10, Mood: -20, Health: -10 } }, 
+            { text: "主動辭職創業", effects: { Money: -3000, SelfWorth: 40, Mood: 20, Health: -20 }, risk: {chance: 0.2, success: {Money: 10000}, fail: {Money: -2000}} }
+        ]
+    },
+    {
+        text: "【突發】身體劇烈疼痛",
+        emoji: "🏥",
+        type: 'major',
+        options: [
+            { text: "掛急診詳細檢查", effects: { Money: -800, Health: 20, Mood: -10 }, risk: {chance: 0.3, fail: {Health: -50, text:"發現重病"}} },
+            { text: "吃止痛藥忍耐", effects: { Money: -50, Health: -30, Mood: -5 } },
+            { text: "相信偏方療法", effects: { Money: -2000, Health: -60, Values: -30 } }
+        ]
+    },
+    {
+        text: "【突發】轉帳後發現是詐騙",
+        emoji: "😈",
+        type: 'major',
+        options: [
+            { text: "被騙光積蓄", effects: { Money: -500, Mood: -80, Values: 20, SelfWorth: -50 }, flag: 'scammed' },
+            { text: "被騙光積蓄", effects: { Money: -1000, Mood: -80, Values: 20, SelfWorth: -50 }, flag: 'scammed' },
+            { text: "被騙光積蓄", effects: { Money: -800, Mood: -80, Values: 20, SelfWorth: -50 } , flag: 'scammed'}
+        ]
+    },
+    {
+        text: "朋友約喝咖啡聊是非",
+        emoji: "☕",
+        options: [
+            { text: "去咖啡廳", effects: { Money: -180, Mood: 20, SelfWorth: 5, Values: -5, MentalHealth: 8, Social: 15 } },
+            { text: "視訊聊聊就好", effects: { Mood: 8, SelfWorth: 5, Values: 5, MentalHealth: 4, Social: 8 } },
+            { text: "拒絕社交!", effects: { Mood: -5, SelfWorth: -3, Values: 2, MentalHealth: 2, Social: -8 } }
+        ]
+    },
+    {
+        text: "通勤路上看到限時折扣",
+        emoji: "🛍️",
+        options: [
+            { text: "衝進去買", effects: { Money: -220, Mood: 30, SelfWorth: 2, Values: -20, MentalHealth: 6 } },
+            { text: "觀望一下", effects: { Mood: -2, SelfWorth: 3, Values: 5 } },
+            { text: "堅定離開", effects: { Mood: -5, SelfWorth: 8, Values: 10 } }
+        ]
+    },
+    {
+        text: "朋友在 IG 炫耀新包包",
+        emoji: "👜",
+        options: [
+            { text: "搜尋同款想買", effects: { Money: -300, Mood: 20, SelfWorth: 8, Values: -20, MentalHealth: 3 } },
+            { text: "留言稱讚", effects: { Mood: 5, SelfWorth: 3, Values: 5, Social: 4 } },
+            { text: "這朋友不要了", effects: { Mood: -2, SelfWorth: 10, Values: 10, MentalHealth: 2, Social: -30 } }
+        ]
+    },
+    {
+        text: "下班路過超市蛋糕打折",
+        emoji: "🍰",
+        options: [
+            { text: "買回家大吃", effects: { Money: -120, Mood: 25, Hunger: -30, SelfWorth: 2, Values: -8 } },
+            { text: "買打折水果", effects: { Money: -60, Mood: 8, Hunger: -20, Values: 5, SelfWorth: 5 } },
+            { text: "節制跳過", effects: { Mood: -5, Hunger: 5, Values: 5 } }
+        ]
+    },
+    {
+        text: "心情不好想「治療」自己",
+        emoji: "🥺",
+        options: [
+            { text: "購物療法", effects: { Money: -500, Mood: 50, SelfWorth: 15, Values: -35, MentalHealth: 20 } },
+            { text: "找朋友哭訴", effects: { Mood: 15, SelfWorth: 5, MentalHealth: 10, Social: 10 } },
+            { text: "冥想/睡覺", effects: { Mood: 5, SelfWorth: 8, Values: 5, MentalHealth: 15 } }
+        ]
+    },
+    {
+        text: "收到投資訊息",
+        emoji: "📈",
+        options: [
+            { text: "跟風投資", effects: { Money: -300, Mood: -10, Values: -15, MentalHealth: -10 }, risk: {chance: 0.4, success: {Money: 900, Mood: 50}} }, // Special handling logic needed
+            { text: "報名理財課", effects: { Money: -150, SelfWorth: 15, Values: 12, MentalHealth: 5 } },
+            { text: "無視詐騙", effects: { Values: 2 } }
+        ]
+    },
+    {
+        text: "健身房強力推銷",
+        emoji: "💪",
+        options: [
+            { text: "簽了！我要變壯", effects: { Money: -400, SelfWorth: 20, Mood: 10, Values: 10, Hunger: 10 } },
+            { text: "僅體驗一次", effects: { Money: -50, Mood: 5, Hunger: 5 } },
+            { text: "我胖我驕傲", effects: { Money: 0, Mood: 5, SelfWorth: -5, Values: 0 } }
+        ]
+    },
+    {
+        text: "串流平台訂閱漲價通知",
+        emoji: "📺",
+        options: [
+            { text: "續訂！", effects: { Money: -30, Mood: 5, Values: -2 } },
+            { text: "改當免費仔看廣告", effects: { Money: 0, Mood: -10, Values: 5, MentalHealth: -5 } },
+            { text: "戒掉追劇", effects: { Money: 0, Mood: -15, Values: 10, Social: -5, SelfWorth: 5 } }
+        ]
+    },
+    {
+        text: "深夜肚子餓但下雨",
+        emoji: "🌧️",
+        options: [
+            { text: "叫外送", effects: { Money: -200, Mood: 20, Hunger: -50, Values: -10 } },
+            { text: "吃泡麵", effects: { Money: -20, Mood: 10, Hunger: -40, MentalHealth: -2 } },
+            { text: "喝水睡覺", effects: { Money: 0, Mood: -10, Hunger: 10, Values: 10, SelfWorth: 5 } }
+        ]
+    },
+    {
+        text: "朋友結婚發紅色炸彈",
+        emoji: "🧧",
+        options: [
+            { text: "大包紅包充面子", effects: { Money: -600, Mood: 10, SelfWorth: 20, Social: 20, Values: -10 } },
+            { text: "一般行情價", effects: { Money: -300, Social: 5, Values: 5 } },
+            { text: "裝忙不去", effects: { Money: 0, Social: -30, Mood: -5, SelfWorth: -5 } }
+        ]
+    },
+    {
+        text: "最新一代手機發表",
+        emoji: "📱",
+        options: [
+            { text: "手刀預購", effects: { Money: -800, Mood: 50, SelfWorth: 30, Values: -40 } },
+            { text: "手機還能用", effects: { Money: 0, Values: 15, SelfWorth: 5 } },
+            { text: "酸它沒新意", effects: { Mood: 5, Social: -5 } }
+        ]
+    },
+    {
+        text: "突然生病不舒服",
+        emoji: "😷",
+        options: [
+            { text: "請假看醫生", effects: { Money: -150, Mood: -10, MentalHealth: 20, SelfWorth: -5 } },
+            { text: "成藥吃吃就好", effects: { Money: -50, Mood: -5, MentalHealth: 5 } },
+            { text: "硬撐去上班", effects: { Money: 100, Mood: -30, MentalHealth: -20, SelfWorth: 10 } }
+        ]
+    },
+    {
+        text: "路上有人在賣愛心筆",
+        emoji: "🖊️",
+        options: [
+            { text: "買一支支持", effects: { Money: -100, Mood: 10, SelfWorth: 10, Values: -5 } },
+            { text: "假裝沒聽到", effects: { Money: 0, Mood: -2, Social: -2 } },
+            { text: "罵他！", effects: { Money: 0, Mood: -10, Values: -10, Social: -10 } }
+        ]
+    },
+    {
+        text: "計程車還是走路？",
+        emoji: "🚕",
+        options: [
+            { text: "我爛我搭車", effects: { Money: -150, Mood: 10, Hunger: 0, MentalHealth: 5 } },
+            { text: "走路當運動", effects: { Money: 0, Mood: -5, Hunger: 10, MentalHealth: 5, Values: 5 } },
+            { text: "騎共享單車", effects: { Money: -15, Mood: 0, Hunger: 5, Values: 5 } }
+        ]
+    },
+    {
+        text: "網購湊免運",
+        emoji: "📦",
+        options: [
+            { text: "多買一件衣服", effects: { Money: -300, Mood: 20, Values: -15 } },
+            { text: "付運費就好", effects: { Money: -60, Mood: -5, Values: 5 } },
+            { text: "清空購物車不買了", effects: { Money: 0, Mood: -10, Values: 15, SelfWorth: 10 } }
+        ]
+    },
+    {
+        text: "家裡電器壞了",
+        emoji: "🔌",
+        options: [
+            { text: "買最新的", effects: { Money: -500, Mood: 25, Values: -20 } },
+            { text: "找人修", effects: { Money: -200, Mood: 0, Values: 5 } },
+            { text: "敲一敲 將就著用", effects: { Money: 0, Mood: -20, MentalHealth: -10, Values: 10 } }
+        ]
+    },
+    {
+        text: "偶像開演唱會",
+        emoji: "🎫",
+        options: [
+            { text: "搶搖滾區!", effects: { Money: -500, Mood: 60, MentalHealth: 20, Values: -30 } },
+            { text: "買看台區", effects: { Money: -200, Mood: 30, Values: -10 } },
+            { text: "不參加", effects: { Money: 0, Mood: -30, Social: -10 } }
+        ]
+    },
+    {
+        text: "辦公室團購零食",
+        emoji: "🍩",
+        options: [
+            { text: "跟一波", effects: { Money: -80, Mood: 15, Social: 10, Hunger: -10, Values: -5 } },
+            { text: "不跟", effects: { Money: 0, Social: -15, Values: 5 } },
+            { text: "幫忙登記", effects: { Money: 0, Social: 20, Mood: 5 } }
+        ]
+    },
+    {
+        text: "被短影片生火某個垃圾小物",
+        emoji: "🔥",
+        options: [
+            { text: "下單！", effects: { Money: -180, Mood: 25, SelfWorth: -5, Values: -25 } },
+            { text: "放入追蹤清單", effects: { Money: 0, Mood: 0, Values: 0 } },
+            { text: "白癡才買", effects: { Money: 0, SelfWorth: 10, Values: 10 } }
+        ]
+    },
+    {
+        text: "房東通知要漲租/繳帳單",
+        emoji: "🧾",
+        options: [
+            { text: "乖乖繳錢", effects: { Money: -300, Mood: -20, Values: 5, SelfWorth: 5 } },
+            { text: "拖延幾天", effects: { Money: 0, Mood: 5, Values: -10, MentalHealth: -15 } }, // Late fee logic implied?
+            { text: "打電話哭窮", effects: { Money: -250, SelfWorth: -20, Social: -10 } }
+        ]
+    },
+    {
+        text: "想學新技能",
+        emoji: "📚",
+        options: [
+            { text: "買線上全套課", effects: { Money: -350, SelfWorth: 20, Values: 10, Mood: 5 } },
+            { text: "看免費 YouTube", effects: { Money: 0, SelfWorth: 10, Values: 15 } },
+            { text: "太累了算了", effects: { Money: 0, SelfWorth: -10, Mood: 5 } }
+        ]
+    },
+    {
+        text: "在路上撿到 100 元",
+        emoji: "💵",
+        options: [
+            { text: "暗槓起來", effects: { Money: 100, Mood: 20, Values: -20, SelfWorth: -5 } },
+            { text: "捐給便利商店", effects: { Money: 0, Mood: 10, Values: 20, SelfWorth: 10 } },
+            { text: "交給警察", effects: { Money: 0, Mood: -5, Values: 25 } }
+        ]
+    },
+    {
+        text: "盲盒/扭蛋機",
+        emoji: "💊",
+        options: [
+            { text: "抽到隱藏版為止", effects: { Money: -300, Mood: 35, Values: -30, MentalHealth: -5 } },
+            { text: "只抽一個", effects: { Money: -60, Mood: 10, Values: -5 } },
+            { text: "看看就好", effects: { Money: 0, Values: 5 } }
+        ]
+    },
+    {
+        text: "父母打電話來問候",
+        emoji: "📞",
+        options: [
+            { text: "轉錢孝敬", effects: { Money: -200, Mood: 10, Values: 20, Family: 20 } },
+            { text: "聊聊天", effects: { Money: 0, Mood: 15, MentalHealth: 10, Social: 10 } },
+            { text: "說在忙掛掉", effects: { Money: 0, Mood: -10, Values: -10, MentalHealth: -10 } }
+        ]
+    },
+    {
+        text: "半夜睡不著",
+        emoji: "🦉",
+        options: [
+            { text: "網購逛蝦皮", effects: { Money: -150, Mood: 15, MentalHealth: -5 } },
+            { text: "追劇到天亮", effects: { Money: 0, Mood: 10, MentalHealth: -20, Hunger: 10 } },
+            { text: "數羊", effects: { Money: 0, Mood: -5, MentalHealth: 10 } }
+        ]
+    },
+    {
+        text: "刮刮樂誘惑",
+        emoji: "🎫",
+        options: [
+            { text: "買一張試手氣", effects: { Money: -100, Mood: 5 }, risk: {chance: 0.2, success: {Money: 200, Mood: 30}} },
+            { text: "包整本", effects: { Money: -500, Mood: 10, Values: -40 }, risk: {chance: 0.1, success: {Money: 2000, Mood: 100}} },
+            { text: "不賭博", effects: { Money: 0, Values: 10 } }
+        ]
+    },
+    {
+        text: "午餐時間，超想吃麥當勞…",
+        emoji: "🍔",
+        type: "food",
+        options: [
+            { text: "太胖不吃", effects: { Mood: -10, SelfWorth: 5, Values: 10, Hunger: 10 } },
+            { text: "套餐薯條加大！", effects: { Money: -200, Mood: 25, Hunger: -60, Health: -10, Values: -10 } },
+            { text: "只吃薯條!", effects: { Money: -60, Mood: 10, Hunger: -20, Health: -5 } }
+    ]
+    },
+    {
+        text: "今天該怎麼洗澡？",
+        emoji: "🛁",
+        options: [
+        { text: "泰國浴", effects: { Money: -800, Mood: 40, Health: 10, Values: -50, Social: -10 } },
+        { text: "泡泡浴", effects: { Money: -800, Mood: 50, Health: 10, Values: -50, Social: -10 } },
+        { text: "回家洗澡", effects: { Money: 0, Mood: 5, Health: 5, Values: 10 } }
+        ]
+    },
+    {
+        text: "同事揪飲料，你要跟嗎？",
+        emoji: "🧋",
+        options: [
+            { text: "訂！哪次不訂！", effects: { Money: -80, Mood: 15, Social: 10, Values: -5 } },
+            { text: "我喝水", effects: { Mood: -5, Values: 10, Health: 5 } },
+            { text: "叫同事請客", effects: { Money: 0, Mood: 10, Social: -15, Values: -10, SelfWorth: 5 } }
+        ]
+    }
+];
+
+/* ================= LOGIC ================= */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const GAME_CONFIG = {
+    totalDays: 1,
+    eventsPerDay: 10,
+    initialStats: {
+        Money: 1000,
+        Mood: 50,
+        SelfWorth: 50,
+        Hunger: 20,
+        Values: 50,
+        Health: 70, 
+        Social: 50
+    }
+};
+
+let state = {
+    day: 1,
+    eventIndex: 0,
+    stats: { ...GAME_CONFIG.initialStats },
+    history: [],
+    currentEvent: null,
+    eventQueue: [],
+    status: 'MENU',
+    trackers: {
+        foodSpend: 0,
+        gamingSpend: 0,
+        flags: [],
+        lastEventType: null // 用來判斷是否賭博破產
+    }
+};
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+class Game {
+    constructor() {
+        this.hud = document.getElementById('gameHud');
+        this.startScreen = document.getElementById('startScreen');
+        this.gameOverScreen = document.getElementById('gameOverScreen');
+        this.historyLog = document.getElementById('historyLog');
+        this.legendModal = document.getElementById('legendModal');
+        
+        this.uiIds = {
+            day: document.getElementById('dayVal'),
+            money: document.getElementById('moneyVal'),
+            card: document.getElementById('eventCard'),
+            emoji: document.getElementById('eventEmoji'),
+            text: document.getElementById('eventText'),
+            options: document.getElementById('optionsContainer'),
+            bars: {
+                Mood: document.querySelector('#stat-Mood .progress-fill'),
+                Hunger: document.querySelector('#stat-Hunger .progress-fill'),
+                Values: document.querySelector('#stat-Values .progress-fill'),
+                Health: document.querySelector('#stat-Health .progress-fill'),
+                SelfWorth: document.querySelector('#stat-SelfWorth .progress-fill'),
+                Social: document.querySelector('#stat-Social .progress-fill')
+            },
+            vals: {
+                Mood: document.querySelector('#stat-Mood .stat-val-text'),
+                Hunger: document.querySelector('#stat-Hunger .stat-val-text'),
+                Values: document.querySelector('#stat-Values .stat-val-text'),
+                Health: document.querySelector('#stat-Health .stat-val-text'),
+                SelfWorth: document.querySelector('#stat-SelfWorth .stat-val-text'),
+                Social: document.querySelector('#stat-Social .stat-val-text')
+            }
+        };
+    }
+
+    start() {
+        state.day = 1;
+        state.eventIndex = 0;
+        state.stats = { ...GAME_CONFIG.initialStats };
+        state.status = 'PLAYING';
+        state.history = [];
+        state.trackers = { foodSpend: 0, gamingSpend: 0, flags: [], lastEventType: null };
+        
+        // 修正 3: 降低彩票機率
+        const lotteryEvent = EVENTS_POOL.find(e => e.type === 'lottery');
+        const gambleEvent = EVENTS_POOL.find(e => e.type === 'gamble');
+        const majorEvents = EVENTS_POOL.filter(e => e.type === 'major');
+        const commonEvents = EVENTS_POOL.filter(e => e.type !== 'lottery' && e.type !== 'gamble' && e.type !== 'major');
+        
+        // 建立池子: 基本事件
+        let pool = [...commonEvents].sort(() => Math.random() - 0.5);
+        
+        // 必加一個 Major Event
+        pool = pool.slice(0, GAME_CONFIG.eventsPerDay - 3); // 留 3 個空位給特殊事件
+        pool.push(majorEvents[Math.floor(Math.random() * majorEvents.length)]);
+        
+        // 20% 機率加入賭博事件
+        if (Math.random() < 0.2) pool.push(gambleEvent);
+        else pool.push(commonEvents[Math.floor(Math.random() * commonEvents.length)]);
+        
+        // 5% 機率加入彩票事件 (Rare)
+        if (Math.random() < 0.05) pool.push(lotteryEvent);
+        else pool.push(commonEvents[Math.floor(Math.random() * commonEvents.length)]);
+
+        // 補滿 10 個 (如果上面沒加滿)
+        while(pool.length < 10) {
+             pool.push(commonEvents[Math.floor(Math.random() * commonEvents.length)]);
+        }
+
+        state.eventQueue = pool.sort(() => Math.random() - 0.5); // 再次洗牌
+
+        this.startScreen.classList.remove('active');
+        this.gameOverScreen.classList.remove('active');
+        this.hud.classList.remove('hidden');
+        this.historyLog.innerHTML = '<div style="color:#999; text-align:center; padding-top:10px;">(遊戲開始)</div>';
+        
+        this.updateUI();
+        this.nextEvent();
+        this.loop();
+    }
+
+    toggleLegend() {
+        this.legendModal.classList.toggle('show');
+    }
+
+    nextEvent() {
+        if (state.eventIndex >= GAME_CONFIG.eventsPerDay) {
+            this.endDay();
+            return;
+        }
+
+        state.currentEvent = state.eventQueue[state.eventIndex];
+        this.renderEventCard(state.currentEvent);
+    }
+
+    renderEventCard(event) {
+        const ui = this.uiIds;
+        ui.emoji.textContent = event.emoji;
+        ui.text.textContent = event.text;
+        
+        ui.card.style.opacity = '0';
+        ui.card.style.transform = 'translateY(10px)';
+        requestAnimationFrame(() => {
+            ui.card.style.transition = 'all 0.4s ease';
+            ui.card.style.opacity = '1';
+            ui.card.style.transform = 'translateY(0)';
+        });
+
+        ui.options.innerHTML = '';
+        event.options.forEach((opt) => {
+            const btn = document.createElement('div');
+            btn.className = 'option-btn';
+            
+            let hintHTML = '';
+            if (opt.effects && opt.effects.Money && opt.effects.Money > 0) {
+                hintHTML += `<span class="option-gain">+$${opt.effects.Money}</span>`;
+            }
+
+            btn.innerHTML = `<span>${opt.text}</span> ${hintHTML}`;
+            
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.handleChoice(opt); });
+            btn.addEventListener('click', () => this.handleChoice(opt));
+            
+            ui.options.appendChild(btn);
+        });
+
+        document.getElementById('eventSubtext').textContent = `事件 ${state.eventIndex + 1} / ${GAME_CONFIG.eventsPerDay}`;
+        this.uiIds.day.textContent = state.eventIndex + 1;
+    }
+
+    handleChoice(option) {
+        if (state.status !== 'PLAYING') return;
+
+        state.trackers.lastEventType = state.currentEvent.type;
+        let effects = option.effects ? { ...option.effects } : {};
+        let actualChanges = {};
+        let logText = option.text;
+
+        // 修正 4: 賭博邏輯處理
+        if (state.currentEvent.type === 'gamble' && option.gambleType !== 'none') {
+            const roll = Math.floor(Math.random() * 10) + 1; // 1~10
+            const isBig = roll >= 6;
+            const win = (option.gambleType === 'big' && isBig) || (option.gambleType === 'small' && !isBig);
+            
+            if (win) {
+                effects = { Money: 500, Mood: 20 };
+                this.spawnFloatingText(`骰出 ${roll}, 贏了!`, window.innerWidth/2, window.innerHeight/2, '#27ae60');
+                logText += ` (骰出${roll} 贏)`;
+            } else {
+                effects = { Money: -500, Mood: -30 };
+                this.spawnFloatingText(`骰出 ${roll}, 輸了!`, window.innerWidth/2, window.innerHeight/2, '#e74c3c');
+                logText += ` (骰出${roll} 輸)`;
+            }
+        }
+
+        // Risk Calculation (Normal events)
+        else if (option.risk) {
+            if (Math.random() > option.risk.chance) { // Fail
+                if (option.risk.fail) effects = { ...effects, ...option.risk.fail };
+                this.spawnFloatingText("失敗...", window.innerWidth/2, window.innerHeight/2, '#e74c3c');
+            } else { // Success
+                if (option.risk.success) effects = { ...effects, ...option.risk.success };
+                this.spawnFloatingText("成功!", window.innerWidth/2, window.innerHeight/2, '#27ae60');
+            }
+        }
+
+        // Flag Tracking
+        if (option.flag) state.trackers.flags.push(option.flag);
+
+        // Spending Tracking
+        if (state.currentEvent.type === 'food' && effects.Money < 0) state.trackers.foodSpend += Math.abs(effects.Money);
+        if (state.currentEvent.type === 'gaming' && effects.Money < 0) state.trackers.gamingSpend += Math.abs(effects.Money);
+
+        // Apply Stats
+        for (let key in effects) {
+            if (state.stats.hasOwnProperty(key)) {
+                let oldVal = state.stats[key];
+                state.stats[key] += effects[key];
+                
+                if (key !== 'Money') {
+                    state.stats[key] = Math.max(0, Math.min(100, state.stats[key]));
+                }
+                
+                actualChanges[key] = state.stats[key] - oldVal;
+            }
+        }
+
+        this.logHistory(logText, actualChanges);
+        this.showFeedback(actualChanges);
+        this.updateUI();
+
+        // 修正 3: 彩票頭獎隱藏結局
+        if (option.flag === 'jackpot_winner') {
+             this.triggerGameOver('還敢中頭獎阿 養我!', '你運氣好到不像是這個世界的人。快分我一點！', '🤑');
+             return;
+        }
+
+        // 修正 2 & 4: 金錢負數立即結束
+        if (state.stats.Money < 0) {
+            if (state.trackers.lastEventType === 'gamble') {
+                this.triggerGameOver('賭到破產', '十賭九輸，你不信邪，結果輸到脫褲。', '🎲');
+            } else {
+                this.triggerGameOver('活該窮死', '沒錢還敢花？你的信用與人生同時破產了。', '💸');
+            }
+            return;
+        }
+
+        if (state.stats.Health <= 0) {
+            this.triggerGameOver('不幸身亡', '你的健康狀況惡化到了無法挽回的地步。', '⚰️');
+            return;
+        }
+        if (state.stats.Hunger >= 100) {
+            this.triggerGameOver('餓死街頭', '你實在太餓了，已經沒有力氣繼續走下去。', '🍖');
+            return;
+        }
+
+        state.eventIndex++;
+        setTimeout(() => this.nextEvent(), 300);
+    }
+
+    logHistory(choiceText, changes) {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        
+        let changeStr = [];
+        const emojiMap = { Money: '💰', Mood: '😊', Hunger: '🍔', Health: '❤️', Values: '⚖️', SelfWorth: '💎', Social: '💬' };
+        
+        for (let k in changes) {
+            if (changes[k] === 0) continue;
+            const val = changes[k] > 0 ? `+${changes[k]}` : changes[k];
+            const cls = changes[k] > 0 ? 'diff-pos' : 'diff-neg';
+            const isBad = (k === 'Hunger' && changes[k] > 0) || (k !== 'Hunger' && changes[k] < 0);
+            const finalCls = isBad ? 'diff-neg' : 'diff-pos';
+            
+            changeStr.push(`${emojiMap[k]}<span class="${finalCls}">${val}</span>`);
+        }
+
+        item.innerHTML = `<span>選擇: ${choiceText}</span><br><small>${changeStr.join(', ') || '無變化'}</small>`;
+        this.historyLog.prepend(item);
+    }
+
+    endDay() {
+        if (state.stats.Hunger >= 80) state.stats.Health -= 10;
+        this.determineEnding();
+    }
+
+    showFeedback(changes) {
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+        let delay = 0;
+        for (let k in changes) {
+            if (changes[k] === 0) continue;
+            let color = changes[k] > 0 ? '#27ae60' : '#e74c3c';
+            if (k === 'Hunger') color = changes[k] > 0 ? '#e74c3c' : '#27ae60';
+            
+            const txt = `${k} ${changes[k] > 0 ? '+' : ''}${changes[k]}`;
+            setTimeout(() => {
+                this.spawnFloatingText(txt, cx + (Math.random()*80 - 40), cy + (Math.random()*80 - 40), color);
+            }, delay);
+            delay += 100;
+        }
+    }
+
+    spawnFloatingText(text, x, y, color) {
+        const el = document.createElement('div');
+        el.className = 'floating-text';
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.style.color = color;
+        el.innerText = text;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1500);
+    }
+
+    updateUI() {
+        this.uiIds.money.innerText = state.stats.Money;
+        
+        for (let key in this.uiIds.bars) {
+            const val = state.stats[key];
+            this.uiIds.bars[key].style.width = val + '%';
+            this.uiIds.vals[key].innerText = val;
+            
+            if (key === 'Hunger') {
+                 this.uiIds.bars[key].style.background = val > 60 ? '#e74c3c' : '#2ecc71';
+            } else if (key === 'Health' || key === 'Mood') {
+                 this.uiIds.bars[key].style.background = val < 30 ? '#e74c3c' : (val > 70 ? '#2ecc71' : '#f1c40f');
+            }
+        }
+    }
+
+    determineEnding() {
+        const s = state.stats;
+        const t = state.trackers;
+        let title = "普通市民";
+        let desc = "你平平淡淡地過完了這一天。無聊，但安全。";
+        let emoji = "😐";
+
+        if (s.Money < 300 && (s.Health < 40 || s.Mood < 40)) {
+            title = "一般窮鬼";
+            desc = "沒錢、沒心情、沒健康。你真的過得……算了，不說傷人。";
+            emoji = "🪫";
+        }else if (t.flags.includes('scammed') && s.Money < 0) {
+            title = "白癡";
+            desc = "你不是輸給世界，你是輸給自己的智商。詐騙集團都謝謝你。";
+            emoji = "🤡";
+        }else if (t.flags.includes('disabled') || (t.flags.includes('injured') && s.Health < 30)) {
+            title = "殘障人士";
+            desc = "一場意外永遠改變了你的人生。錢再多也買不回健康的身體。";
+            emoji = "🦽";
+        } else if (t.flags.includes('lucky') || (s.Money > 10000)) {
+            title = "幸運星";
+            desc = "天選之人！不管是中樂透還是創業成功，你現在財富自由了。";
+            emoji = "🌟";
+        } else if (s.Money < 0 && s.Health < 30) {
+            title = "可憐人";
+            desc = "沒錢、沒健康，連老天爺都不同情你。最悲慘的結局。";
+            emoji = "🌧️";
+        } else if (s.Social <= 20) {
+            title = "邊緣人";
+            desc = "朋友不記得你，同事不找你，世界跟你沒有關係。";
+            emoji = "🧍";
+        } else if (s.Hunger <= 15 && t.foodSpend > 500) {
+            title = "肥豬";
+            desc = "你這一天除了吃還是吃。肚子很飽，就是隻豬。";
+            emoji = "🐷";
+        } else if (t.gamingSpend > 2000) {
+            title = "盤子";
+            desc = "遊戲公司感謝您的乾爹贊助。你獲得了虛擬的快樂，和真實的貧窮。";
+            emoji = "💸";
+        } else if (t.gamingSpend >= 500) {
+            title = "小課玩家";
+            desc = "適度課金讓生活更快樂。你很享受，但也還算理智。";
+            emoji = "🎮";
+        }   else if (t.flags.includes('scammed') && s.Money < 0) {
+            title = "白癡";
+            desc = "你不是輸給世界，你是輸給自己的智商。詐騙集團都謝謝你。";
+            emoji = "🤡";
+        } else if (s.Money <= 0) {
+            title = "破產負債";
+            desc = "你的戶頭只剩下兩位數。明天該怎麼辦？";
+            emoji = "📉";
+        } else if (s.Money >= 1500 && s.Values >= 70) {
+            title = "守財奴";
+            desc = "你存了很多錢，但這一天你真的快樂嗎？";
+            emoji = "🔒";
+        } else if (s.Mood >= 90 && s.Social >= 70) {
+            title = "社交名流";
+            desc = "人見人愛，花見花開。你的生活充滿了光鮮亮麗。";
+            emoji = "✨";
+        }
+
+        this.triggerGameOver(title, desc, emoji);
+    }
+
+    triggerGameOver(title, desc, emoji) {
+        state.status = 'GAMEOVER';
+        this.hud.classList.add('hidden');
+        this.gameOverScreen.classList.add('active');
+        
+        document.getElementById('endTitle').innerText = title;
+        document.getElementById('endReason').innerText = desc;
+        document.getElementById('endEmoji').innerText = emoji;
+
+        const grid = document.getElementById('endStats');
+        grid.innerHTML = '';
+        const emojiMap = { Money: '💰', Mood: '😊', Hunger: '🍔', Health: '❤️', Values: '⚖️', SelfWorth: '💎', Social: '💬' };
+        
+        const keys = ['Money', 'Health', 'Mood', 'Hunger', 'Values', 'SelfWorth', 'Social'];
+        
+        keys.forEach(k => {
+            let val = state.stats[k];
+            let color = '#333';
+            if (k === 'Money' && val < 0) color = '#e74c3c';
+            grid.innerHTML += `<div class="end-stat-item">
+                <span>${emojiMap[k]} ${k}</span>
+                <span style="color:${color}; font-weight:bold;">${val}</span>
+            </div>`;
+        });
+    }
+
+    loop() {
+        if (state.status === 'MENU') {
+             this.drawBackground();
+             requestAnimationFrame(() => this.loop());
+             return;
+        }
+        if (state.status === 'GAMEOVER') {
+            this.drawBackground(); 
+            requestAnimationFrame(() => this.loop());
+            return;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        this.drawBackground();
+        requestAnimationFrame(() => this.loop());
+    }
+
+    drawBackground() {
+        const time = Date.now() * 0.0002;
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#f2f0e4');
+        gradient.addColorStop(1, '#e8e6d9');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'rgba(0,0,0,0.03)';
+        ctx.font = '20px Arial';
+        for(let i=0; i<8; i++) {
+            const x = (Math.sin(time + i) * canvas.width/2) + canvas.width/2;
+            const y = (Math.cos(time * 0.7 + i*2) * canvas.height/2) + canvas.height/2;
+            ctx.fillText(i%2==0 ? "$" : "?", x, y);
+        }
+    }
+
+    goHome() {
+        // 回主頁，清空遊戲 UI、顯示主畫面
+        this.hud.classList.add('hidden');
+        this.gameOverScreen.classList.remove('active');
+        this.startScreen.classList.add('active');
+        state.status = 'MENU';
+    }
+}
+
+const game = new Game();
+document.body.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+
+</script>
+</body>
+</html>
